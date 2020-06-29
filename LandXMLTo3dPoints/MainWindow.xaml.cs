@@ -30,8 +30,12 @@ namespace LandXMLTo3dPoints
             NumberFormatInfo format = new NumberFormatInfo();
             format.NumberDecimalSeparator = ".";
 
+            double delta = 1;
+
             double length = Convert.ToDouble(alignment.Length, format);
-            int nPoints = (int)(length / 0.5) + 1;            
+            int nPoints = (int)(length / delta) + 1;
+
+            delta = length / nPoints;
 
             // Gets a NumberFormatInfo associated with the en-US culture.
             NumberFormatInfo nfi = new CultureInfo("en-US", false).NumberFormat;
@@ -47,11 +51,11 @@ namespace LandXMLTo3dPoints
                 double X = 0, Y = 0, Z = 0;
                 for (int i = 0; i < nPoints; i++)
                 {
-                    double sta = i * 0.5;
+                    double sta = i * delta;
 
                     corridor.XYZCoord(sta, ref X, ref Y, ref Z);
 
-                    Alignment.WriteLine(X.ToString("N", nfi) + " " + Y.ToString("N", nfi) + " " + Z.ToString("N", nfi) + " " + "2.0" + " " + "2.0");
+                    Alignment.WriteLine(sta.ToString("N", nfi) + " " + X.ToString("N", nfi) + " " + Y.ToString("N", nfi) + " " + Z.ToString("N", nfi) + " " + "2.0" + " " + "2.0");
                 }
             }
         }

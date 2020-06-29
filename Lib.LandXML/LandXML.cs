@@ -166,9 +166,6 @@ namespace Xml2CSharp
     }
 
 
-
-
-
     [XmlRoot(ElementName = "CoordGeom")]
     public class CoordGeom
     {
