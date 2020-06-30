@@ -14,10 +14,13 @@ namespace Generator.LandXML
             VertAlignment = new VertAlignment(aligment);
         }
 
-        public void XYZCoord(double sta, ref double X, ref double Y, ref double Z)
+        public bool XYZCoord(double sta, ref double X, ref double Y, ref double Z)
         {
-            HorAlignment.XYCoordInStation(sta, ref X, ref Y);
-            VertAlignment.ZCoordInStation(sta, ref Z);
+            bool resHor =  HorAlignment.XYCoordInStation(sta, ref X, ref Y);
+            bool resVer =  VertAlignment.ZCoordInStation(sta, ref Z);
+
+            if (resHor && resVer) return true;
+            return false;
         }         
     }
 }

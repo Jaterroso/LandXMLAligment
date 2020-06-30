@@ -44,15 +44,18 @@ namespace Generator.LandXML
             {
                 Curve curve = aligment.CoordGeom.Curve[i];
 
-                double staStart = Convert.ToDouble(curve.StaStart);
+                double staStart = Convert.ToDouble(curve.StaStart, _format);
                 double length = Convert.ToDouble(curve.Length, _format);
 
-                double xIni = Convert.ToDouble(curve.Start.Point.Split(' ')[0], _format);
-                double yIni = Convert.ToDouble(curve.Start.Point.Split(' ')[1], _format);
-                double xFin = Convert.ToDouble(curve.End.Point.Split(' ')[0], _format);
-                double yFin = Convert.ToDouble(curve.End.Point.Split(' ')[1], _format);
+                double dirStart = Convert.ToDouble(curve.DirStart, _format);
+                double dirEnd = Convert.ToDouble(curve.DirEnd, _format);
+                double radius = Convert.ToDouble(curve.Radius, _format);
+                double xCenter = Convert.ToDouble(curve.Center.Point.Split(' ')[0], _format);
+                double yCenter = Convert.ToDouble(curve.Center.Point.Split(' ')[1], _format);
 
-                sectionsList.Add(new HorizontalCurve());
+                string rot = curve.Rot;
+
+                sectionsList.Add(new HorizontalCurve(staStart, length, dirStart, dirEnd, radius, rot, xCenter, yCenter));
             }
         }
 
@@ -83,97 +86,118 @@ namespace Generator.LandXML
         }
        
 
-        public void XYCoordInStation(double sta, ref double X, ref double Y)
+        public bool XYCoordInStation(double sta, ref double X, ref double Y)
         {
             for (int i = 0; i < sectionsList.Count; i++)
             {
                 HorizontalEntity section = sectionsList[i];
 
-                double staIni = section.staStart;
-                double staFin = staIni + section.length;
+                double staIni = section.StaStart;
+                double staFin = staIni + section.Length;
 
                 if (staIni <= sta && sta <= staFin)
                 {
                     section.XYCoordInStation(sta, ref X, ref Y);
-                    return;
+                    return true;
                 }
             }
+
+            return false;
         }    
     }
 
     abstract class HorizontalEntity
     {       
-        public double staStart { get; set; }
-        public double length { get; set; }
+        public double StaStart { get; set; }
+        public double Length { get; set; }
 
-        public double xIni { get; set; }
-        public double yIni { get; set; }
-        public double xFin { get; set; }
-        public double yFin { get; set; }
+        public double XIni { get; set; }
+        public double YIni { get; set; }
+        public double XFin { get; set; }
+        public double YFin { get; set; }
 
         public abstract void XYCoordInStation(double sta, ref double X, ref double Y);
     }
 
     class HorizontalLine : HorizontalEntity
     {
-        public double dir { get; set; }
+        public double Dir { get; set; }
 
         public HorizontalLine(double staStart, double length, double xIni, double yIni, double xFin, double yFin, double dir)
         {
-            this.staStart = staStart;
-            this.length = length;
-            this.xIni = xIni;
-            this.yIni = yIni;
-            this.xFin = xFin;
-            this.yFin = yFin;
-            this.dir = dir;
+            StaStart = staStart;
+            Length = length;
+            XIni = xIni;
+            YIni = yIni;
+            XFin = xFin;
+            YFin = yFin;
+            Dir = dir;
         }              
 
         public override void XYCoordInStation(double sta, ref double X, ref double Y)
         {
-            double k = (sta - staStart) / length;           
+            double k = (sta - StaStart) / Length;           
 
-            X = xIni + k * (xFin - xIni);
-            Y = yIni + k * (yFin - yIni);
+            X = XIni + k * (XFin - XIni);
+            Y = YIni + k * (YFin - YIni);
         }
     }
 
     class HorizontalCurve : HorizontalEntity
     {
-        public double dirStart { get; set; }
-        public double dirEnd { get; set; }
-        public double radius { get; set; }        
-        public string rot { get; set; }
+        public HorizontalCurve(double staStart, double length, double dirStart, double dirEnd, double radius, string rot, double xCenter, double yCenter)
+        {
+            StaStart = staStart;
+            Length = length;           
 
-        public double xCenter { get; set; }
-        public double yCenter { get; set; }
+            DirStart = dirStart;
+            DirEnd = dirEnd;
+            Radius = radius;
+            Rot = rot;
+            XCenter = xCenter;
+            YCenter = yCenter;
+        }
+
+        public double DirStart { get; set; }
+        public double DirEnd { get; set; }
+        public double Radius { get; set; }        
+        public string Rot { get; set; }
+
+        public double XCenter { get; set; }
+        public double YCenter { get; set; }
 
         public override void XYCoordInStation(double sta, ref double X, ref double Y)
         {
-            double k = (sta - staStart) / length;
+            double k = (sta - StaStart) / Length; 
 
-            ////////////////////////////////////
-            X = -1;
-            Y = -1;
-            ////////////////////////////////////
+            double angStart = DirStart * Math.PI / 200;
+            double angEnd = DirEnd * Math.PI / 200; 
+           
+            double angSta = angStart;
+
+            if (Rot == "cw") angSta += (angEnd - angStart) * k;
+            else angSta -= (angEnd - angStart) * k;
+
+            X = XCenter + Radius * Math.Sin(angSta);
+            Y = YCenter - Radius * Math.Cos(angSta);
         }
     }
 
     class HorizontalSpiral : HorizontalEntity
     {
-        public double dirStart { get; set; }
-        public double dirEnd { get; set; }
-        public double radiusStart { get; set; }
-        public double radiusEnd { get; set; }
-        public double constant { get; set; }
-        public double rot { get; set; }
+        public double DirStart { get; set; }
+        public double DirEnd { get; set; }
+        public double RadiusStart { get; set; }
+        public double RadiusEnd { get; set; }
+        public double Constant { get; set; }
+        public double Rot { get; set; }
 
-        public double xPI { get; set; }
+        public double XPI { get; set; }
         public double PI { get; set; }
 
         public override void XYCoordInStation(double sta, ref double X, ref double Y)
         {
-            double k = (sta - staStart) / length;
+            double k = (sta - StaStart) / Length;
 
             ////////////////////////////////////
             X = -1;

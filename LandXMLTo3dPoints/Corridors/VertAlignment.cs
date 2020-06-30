@@ -100,7 +100,7 @@ namespace Generator.LandXML
         }
        
 
-        public void ZCoordInStation(double sta, ref double Z)
+        public bool ZCoordInStation(double sta, ref double Z)
         {
             for (int i = 0; i < sectionsList.Count; i++)
             {
@@ -112,9 +112,11 @@ namespace Generator.LandXML
                 if (staIni <= sta && sta <= staFin)
                 {
                     section.ZCoordInStation(sta, ref Z);
-                    return;
+                    return true;
                 }
             }
+
+            return false;
         }
 
         private NumberFormatInfo _format = new NumberFormatInfo();
