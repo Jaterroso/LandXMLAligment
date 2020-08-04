@@ -344,14 +344,14 @@ namespace Xml2CSharp
         [XmlAttribute(AttributeName = "n")]
         public string N { get; set; }
         [XmlText]
-        public string Text { get; set; }
+        public string Vertexs { get; set; }
     }
 
     [XmlRoot(ElementName = "Faces")]
     public class Faces
     {
         [XmlElement(ElementName = "F")]
-        public List<F> F { get; set; }
+        public List<F> F { get; set; }       
     }
 
     [XmlRoot(ElementName = "Imperial")]
@@ -526,7 +526,7 @@ namespace Xml2CSharp
         [XmlAttribute(AttributeName = "id")]
         public string Id { get; set; }
         [XmlText]
-        public string Text { get; set; }
+        public string Coord { get; set; }
     }
 
     [XmlRoot(ElementName = "ParaCurve")]

@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using Xml2CSharp;
 
 namespace LandXMLTo3dPoints
 {
@@ -23,40 +24,76 @@ namespace LandXMLTo3dPoints
         {
             OpenLandXMLFile();
 
-            Xml2CSharp.Alignment alignment = _data.Alignments.Alignment[0];
+            Alignments alignments = _data.Alignments;
+            if(alignments != null) GetAlignment(alignments.Alignment[0]);
 
+
+            Surfaces surfaces = _data.Surfaces;
+            if (surfaces != null) GetSurfaces(surfaces);
+        }
+
+        private void GetSurfaces(Surfaces surfaces)
+        {            
+            for (int i = 0; i < surfaces.Surface.Count; i++)
+            {   
+                Surface surface = surfaces.Surface[i];                
+
+                string pathFile = _filePath;
+                string nameFile = "Surface_" + (i + 1).ToString();
+
+                using(StreamWriter SurfaceDat = new StreamWriter(pathFile + "\\" + nameFile + ".dat"))
+                {
+                    Definition definition = surface.Definition;
+
+                    int nPoints = definition.Pnts.P.Count;
+                    SurfaceDat.WriteLine(nPoints.ToString());
+                    for (int ip = 0; ip < nPoints; ip++)
+                    {     
+                        SurfaceDat.WriteLine(definition.Pnts.P[ip].Coord);
+                    }
+
+                    int nFaces = definition.Faces.F.Count;
+                    SurfaceDat.WriteLine(nFaces.ToString());
+                    for (int ifa = 0; ifa < nFaces; ifa++)
+                    {
+                        SurfaceDat.WriteLine(definition.Faces.F[ifa].Vertexs);
+                    }
+                }
+            }
+        }
+
+        private void GetAlignment(Alignment alignment)
+        {
             Corridor corridor = new Corridor(alignment);
+            NumberFormatInfo nfi = NumberFormat();
 
-            NumberFormatInfo format = new NumberFormatInfo();
-            format.NumberDecimalSeparator = ".";
+            double delta = 0.5; 
 
-            double delta = 1;
-
-            double length = Convert.ToDouble(alignment.Length, format);
+            double length = Convert.ToDouble(alignment.Length, nfi);
             int nPoints = (int)(length / delta) + 1;
 
-            delta = length / nPoints;
-            
-            NumberFormatInfo nfi = new CultureInfo("en-US", false).NumberFormat;
-
-            nfi.NumberDecimalSeparator = ".";
-            nfi.NumberGroupSeparator = "";
+            delta = length / (nPoints - 1);
 
             string pathFile = _filePath;
             string nameFile = "Alignment";
 
-            using (StreamWriter Alignment = new StreamWriter(pathFile + "\\" + nameFile + ".dat"))
+            using (StreamWriter Alignment = new StreamWriter(pathFile + "/" + nameFile + ".dat"))
             {
                 double X = 0, Y = 0, Z = 0;
                 for (int i = 0; i < nPoints; i++)
                 {
                     double sta = i * delta;
-
+                    
                     bool result = corridor.XYZCoord(sta, ref X, ref Y, ref Z);
 
-                    if(result) Alignment.WriteLine(sta.ToString("N", nfi) + " " + X.ToString("N", nfi) + " " + Y.ToString("N", nfi) + " " + Z.ToString("N", nfi) + " " + "2.0" + " " + "2.0");
-                }
+                    if (result) Alignment.WriteLine(X.ToString("N", nfi) + " " + Y.ToString("N", nfi));                    
+                }               
             }
+        }
+
+        private static NumberFormatInfo NumberFormat()
+        {
+            return new NumberFormatInfo { NumberDecimalSeparator = ".", NumberGroupSeparator = "" };
         }
 
         string _filePath;
@@ -73,7 +110,7 @@ namespace LandXMLTo3dPoints
             dlg.ShowDialog(this);
         }
 
-        Xml2CSharp.LandXML _data = new Xml2CSharp.LandXML();
+        LandXML _data = new LandXML();
 
         private void dlg_OpenLandXMLFile(object sender, CancelEventArgs e)
         {
