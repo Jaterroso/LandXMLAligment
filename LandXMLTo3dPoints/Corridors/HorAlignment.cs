@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Xml.Serialization;
 using Xml2CSharp;
 
 namespace Generator.LandXML
@@ -109,12 +110,11 @@ namespace Generator.LandXML
                 double staFin = staIni + section.Length;
 
                 if (staIni <= sta && sta <= staFin)
-                {
+                {                    
                     section.XYCoordInStation(sta, ref X, ref Y);
                     return true;
                 }
             }
-
             return false;
         }    
     }
@@ -239,53 +239,50 @@ namespace Generator.LandXML
         }
 
         public override void XYCoordInStation(double sta, ref double X, ref double Y)
-        {
-            double x, y, lIni = 0, Az = 0, A = Constant, xPos, yPos;                       
-            int dir, lambda = 1;           
+        {           
+            double x, y, A = Constant, lIni = 0, omega, xPos, yPos;                       
+            int lambda = 1;           
 
-            if (Desc == "TangentToCurve" || (Desc == "CurvetoCurve" && RadiusEnd < RadiusStart))
+            if (Desc == "TangentToCurve" || (Desc == "CurveToCurve" && RadiusEnd < RadiusStart))
             {
-                if (Desc == "CurvetoCurve") lIni = A * A / RadiusStart;
+                if (Desc == "CurveToCurve") lIni = A * A / RadiusStart;
 
                 x = XIni;
                 y = YIni;
-                Az = DirStart;                              
-                dir = 1;
-                if (Rot == "ccw") lambda = -1;                
+                omega = 100 - DirStart;               
+                if (Rot == "cw") lambda = -1;                
             }
             else 
             {
-                if (Desc == "CurvetoCurve") lIni = A * A / RadiusEnd;
+                if (Desc == "CurveToCurve") lIni = A * A / RadiusEnd;                
 
                 x = XFin;
                 y = YFin;
-                Az = DirEnd;                
-                dir = -1;
-                if (Rot == "cw") lambda = -1;                
+                omega = 300 - DirEnd;               
+                if (Rot == "ccw") lambda = -1;                
             }
 
-            double lSta = sta - StaStart - lIni;
+            omega -= lambda * (lIni * lIni) / (2 * A * A);
+
+            double lSta = sta - StaStart;
 
             double dS = 0.01;
-            int nPunts = (int) (lSta / dS) + 1;
-            dS = lSta / nPunts;            
+            int nPunts = (int)(lSta / dS) + 1;
+            dS = lSta / nPunts;
 
-            xPos = x;
-            yPos = y;
+            for (int i = 0; i < nPunts; i++)
+            {
+                double s = dS * i;
 
-            for (int i = 1; i <= nPunts; i++)
-            {                
-                double s = lIni + dS * i;
-
-                xPos = x + dir * dS * Math.Sin(lambda * ((s * s) / (2 * A * A) + Az) * Math.PI / 200);
-                yPos = y + dir * dS * Math.Cos(lambda * ((s * s) / (2 * A * A) + Az) * Math.PI / 200);
+                xPos = x + dS * Math.Cos((lambda * ((s * s) / (2 * A * A)) + omega) * Math.PI / 200);
+                yPos = y + dS * Math.Sin((lambda * ((s * s) / (2 * A * A)) + omega) * Math.PI / 200);
 
                 x = xPos;
                 y = yPos;
             }
 
-            X = xPos;
-            Y = yPos;
+            X = x;
+            Y = y;
         }  
     }
 }

@@ -41,7 +41,7 @@ namespace LandXMLTo3dPoints
                 string pathFile = _filePath;
                 string nameFile = "Surface_" + (i + 1).ToString();
 
-                using(StreamWriter SurfaceDat = new StreamWriter(pathFile + "\\" + nameFile + ".dat"))
+                using(StreamWriter SurfaceDat = new StreamWriter(pathFile + "/" + nameFile + ".dat"))
                 {
                     Definition definition = surface.Definition;
 
@@ -77,7 +77,15 @@ namespace LandXMLTo3dPoints
             string pathFile = _filePath;
             string nameFile = "Alignment";
 
-            using (StreamWriter Alignment = new StreamWriter(pathFile + "/" + nameFile + ".dat"))
+            string path = pathFile + "/" + nameFile + ".dat";
+
+            if (IsFileLocked(new FileInfo(path)))
+            {
+                MessageBox.Show("Cerrar archivo Aligment.dat");
+                return;
+            }
+
+            using (StreamWriter Alignment = new StreamWriter(path))
             {
                 double X = 0, Y = 0, Z = 0;
                 for (int i = 0; i < nPoints; i++)
@@ -86,9 +94,29 @@ namespace LandXMLTo3dPoints
                     
                     bool result = corridor.XYZCoord(sta, ref X, ref Y, ref Z);
 
-                    if (result) Alignment.WriteLine(X.ToString("N", nfi) + " " + Y.ToString("N", nfi));                    
+                    if (result) Alignment.WriteLine(sta.ToString("N", nfi) + " " + X.ToString("N", nfi) + " " + Y.ToString("N", nfi) + " " + Z.ToString("N", nfi));                    
                 }               
             }
+        }
+
+        private static bool IsFileLocked(FileInfo file)
+        {
+            FileStream stream = null;
+
+            try
+            {
+                stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            }
+            catch (IOException)
+            {
+                return true;
+            }
+            finally
+            {
+                if (stream != null)
+                    stream.Close();
+            }
+            return false;
         }
 
         private static NumberFormatInfo NumberFormat()
