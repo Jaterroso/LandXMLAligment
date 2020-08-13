@@ -41,7 +41,15 @@ namespace LandXMLTo3dPoints
                 string pathFile = _filePath;
                 string nameFile = "Surface_" + (i + 1).ToString();
 
-                using(StreamWriter SurfaceDat = new StreamWriter(pathFile + "/" + nameFile + ".dat"))
+                string path = pathFile + "/" + nameFile + ".dat";
+
+                if (IsFileCreated(new FileInfo(path)) && IsFileLocked(new FileInfo(path)))
+                {
+                    MessageBox.Show("Cerrar archivo Aligment.dat");
+                    return;
+                }
+
+                using (StreamWriter SurfaceDat = new StreamWriter(path))
                 {
                     Definition definition = surface.Definition;
 
@@ -79,7 +87,7 @@ namespace LandXMLTo3dPoints
 
             string path = pathFile + "/" + nameFile + ".dat";
 
-            if (IsFileLocked(new FileInfo(path)))
+            if (IsFileCreated(new FileInfo(path)) && IsFileLocked(new FileInfo(path)))
             {
                 MessageBox.Show("Cerrar archivo Aligment.dat");
                 return;
@@ -117,6 +125,26 @@ namespace LandXMLTo3dPoints
                     stream.Close();
             }
             return false;
+        }
+
+        private static bool IsFileCreated(FileInfo file)
+        {
+            FileStream stream = null;
+
+            try
+            {
+                stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            }
+            catch (FileNotFoundException)
+            {
+                return false;
+            }
+            finally
+            {
+                if (stream != null)
+                    stream.Close();
+            }
+            return true;
         }
 
         private static NumberFormatInfo NumberFormat()
