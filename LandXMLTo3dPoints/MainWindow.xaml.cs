@@ -54,17 +54,40 @@ namespace LandXMLTo3dPoints
                     Definition definition = surface.Definition;
 
                     int nPoints = definition.Pnts.P.Count;
+
+                    int[] idPoints = new int[nPoints];
                     SurfaceDat.WriteLine(nPoints.ToString());
                     for (int ip = 0; ip < nPoints; ip++)
                     {     
                         SurfaceDat.WriteLine(definition.Pnts.P[ip].Coord);
+                        idPoints[ip] = Convert.ToInt32(definition.Pnts.P[ip].Id);
                     }
 
                     int nFaces = definition.Faces.F.Count;
                     SurfaceDat.WriteLine(nFaces.ToString());
                     for (int ifa = 0; ifa < nFaces; ifa++)
                     {
-                        SurfaceDat.WriteLine(definition.Faces.F[ifa].Vertexs);
+                        int nVert = definition.Faces.F[ifa].Vertexs.Split(' ').Length;
+
+                        string faceVerts = "";
+
+                        for (int ivert = 0; ivert < nVert; ivert++)
+                        {
+                            string idVert = definition.Faces.F[ifa].Vertexs.Split(' ')[ivert];
+
+                            for (int ip = 0; ip < idPoints.Length; ip++)
+                            {
+                                if(idPoints[ip] == Convert.ToInt32(idVert))
+                                {
+                                    faceVerts += (ip + 1).ToString();
+                                    break;
+                                }
+                            }
+                            
+                            if(ivert != nVert - 1) faceVerts += " ";
+                        }
+
+                        SurfaceDat.WriteLine(faceVerts);
                     }
                 }
             }
